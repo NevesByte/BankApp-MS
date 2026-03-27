@@ -7,9 +7,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import com.painel_bank_ms.painel_ms.dto.UserDataConsumerDto;
-import com.painel_bank_ms.painel_ms.entity.UserEntity;
-import com.painel_bank_ms.painel_ms.repository.AccountRepository;
+import com.painel_bank_ms.painel_ms.account.AccountRepository;
+import com.painel_bank_ms.painel_ms.account.UserDataConsumerDto;
+import com.painel_bank_ms.painel_ms.account.UserEntity;
 
 @org.springframework.stereotype.Component
 public class UserDataConsumer {

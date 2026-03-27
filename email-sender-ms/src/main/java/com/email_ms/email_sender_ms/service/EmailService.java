@@ -1,34 +1,33 @@
-package main.java.com.email_ms.email_sender_ms.service;
+package com.email_ms.email_sender_ms.service;
 
-import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
 
-import main.java.com.email_ms.email_sender_ms.dtos.EmailRecordDto;
+import com.email_ms.email_sender_ms.dtos.EmailRecordDto;
 
 @Service
 public class EmailService {
-    @Autowired
-    EmailRepository emailRepository;
-    JavaMailSender eMailSender;
 
-    @Value(value = "${spring.mail.username}")
+    @Autowired
+    JavaMailSender emailSender;
+
+    @Value("${spring.mail.username}")
     private String emailFrom;
 
-    @Transactional
-    public EmailRecordDto sendEmail(EmailRecordDto emailDto) {
-        try{
-            emailDto.setSendDateEmail(LocalDateTime.now());
-            emailDto.setEmailFrom(emailFrom);
-
+    public void sendEmail(EmailRecordDto emailDto) {
+        try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(emailDto.getEmailTo());
-            message.setSubject(emailDto.getSubject());
-            message.setText(emailDto.getText());
-            eMailSender.send(message);
-        } catch (MailException e){
-            emailDto.setStatusEmail(StatusEmail.ERROR);
-        }finally{
-            return emailDto;
+            message.setFrom(emailFrom);
+            message.setTo(emailDto.emailTo());
+            message.setSubject(emailDto.subject());
+            message.setText(emailDto.text());
+            emailSender.send(message);
+        } catch (MailException e) {
+            throw new RuntimeException("Erro ao enviar email: " + e.getMessage());
         }
     }
-
 }

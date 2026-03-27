@@ -1,16 +1,19 @@
-package com.painel_bank_ms.painel_ms.entity;
+package com.painel_bank_ms.painel_ms.account.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.validator.constraints.br.CPF;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.painel_bank_ms.painel_ms.enums.AccountStatus;
-import com.painel_bank_ms.painel_ms.enums.AccountTypeEnum;
+import com.painel_bank_ms.painel_ms.account.enums.AccountStatus;
+import com.painel_bank_ms.painel_ms.account.enums.AccountTypeEnum;
+import com.painel_bank_ms.painel_ms.emprestimo.entity.EmprestimoEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +21,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +31,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserEntity {
+    //Cadastro de usuário
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_id")
@@ -61,4 +66,9 @@ public class UserEntity {
     private boolean emailVerified;
     @Column(name = "active")
     private boolean active;
+
+    
+    //Emprestimos
+    @OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL)
+    private List<EmprestimoEntity> emprestimo;
 }

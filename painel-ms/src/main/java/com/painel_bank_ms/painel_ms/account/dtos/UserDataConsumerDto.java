@@ -1,4 +1,4 @@
-package com.painel_bank_ms.painel_ms.dto;
+package com.painel_bank_ms.painel_ms.account.dtos;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
