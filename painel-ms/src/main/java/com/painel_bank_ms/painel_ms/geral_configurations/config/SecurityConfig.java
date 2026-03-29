@@ -1,4 +1,4 @@
-package com.painel_bank_ms.painel_ms.config;
+package com.painel_bank_ms.painel_ms.geral_configurations.config;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;

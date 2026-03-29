@@ -23,9 +23,9 @@ public class EmprestimoController {
     EmprestimoService emprestimoService;
 
     @PostMapping("/emprestimo/criar-emprestimo")
-    public ResponseEntity<Void> criarEmprestimo(@RequestBody ItemEmprestimoDto itemEmprestimoDto){
-        emprestimoService.emprestimoCriar(itemEmprestimoDto);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> criarEmprestimo(@RequestBody ItemEmprestimoDto itemEmprestimoDto,
+                                                JwtAuthenticationToken token){
+        return emprestimoService.emprestimoCriar(itemEmprestimoDto, token);
     }
 
     @GetMapping("/emprestimo")
@@ -36,20 +36,9 @@ public class EmprestimoController {
         return ResponseEntity.ok(emprestimoService.getAllEmprestimos(page, pageSize, token));
     }
 
-    /*Pagar*/
-    @DeleteMapping("/emprestimo/pagar-parcela")
-    public ResponseEntity<Void> pagarParcela(JwtAuthenticationToken token, UUID id){
-        //Pagar
-        return ResponseEntity.ok().build();
-    }
-
-    /*Mostrar as parcelas*/
-
-    
-
-    @GetMapping("/emprestimo/{id}")
-    public ResponseEntity<ItemEmprestimoDto> emprestimoGetById(@PathVariable("id") UUID id,
-                                                               JwtAuthenticationToken token){
-        return ResponseEntity.ok(emprestimoService.emprestimoGetById(token, id));
+    @DeleteMapping("/emprestimo/pagar-parcela/{id}")
+    public ResponseEntity<Void> pagarParcela(JwtAuthenticationToken token,
+                                             @PathVariable UUID id){
+        return emprestimoService.pagarParcela(token, id);
     }
 }

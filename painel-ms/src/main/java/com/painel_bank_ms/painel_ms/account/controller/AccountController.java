@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.painel_bank_ms.painel_ms.account.repository.AccountRepository;
 import com.painel_bank_ms.painel_ms.emprestimo.dtos.FeedEmprestimoDto;
 import com.painel_bank_ms.painel_ms.emprestimo.dtos.ItemEmprestimoDto;
 import com.painel_bank_ms.painel_ms.emprestimo.entity.EmprestimoEntity;
@@ -20,17 +21,19 @@ import com.painel_bank_ms.painel_ms.emprestimo.service.EmprestimoService;
 
 @RestController
 public class AccountController{
-    
-    /*
-    Saldo
-     => Get
+    @Autowired
+    private AccountRepository repository;
 
-    Transferência
-     => Post
-     => GetAll
-     => GetBy
-    Histórico de transações
-     
-    */
+    /*Saldo*/
+    @GetMapping("/account/saldo")
+    public ResponseEntity<String> getSaldo(JwtAuthenticationToken token){
+        return repository.findById(UUID.fromString(token.getName()))
+                .map(user -> ResponseEntity.ok(user.getBalance().toString()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    
+
+
 
 }

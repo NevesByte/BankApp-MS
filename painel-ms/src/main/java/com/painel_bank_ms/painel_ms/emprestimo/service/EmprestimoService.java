@@ -23,6 +23,8 @@ import com.painel_bank_ms.painel_ms.emprestimo.enums.StatusEmprestimo;
 import com.painel_bank_ms.painel_ms.emprestimo.enums.StatusParcela;
 import com.painel_bank_ms.painel_ms.emprestimo.repository.EmprestimoRepository;
 import com.painel_bank_ms.painel_ms.emprestimo.repository.ParcelaRepository;
+import com.painel_bank_ms.painel_ms.geral_configurations.dto.EmailNotificationDto;
+import com.painel_bank_ms.painel_ms.geral_configurations.producer.EmailProducer;
 
 @Service
 public class EmprestimoService {
@@ -31,22 +33,21 @@ public class EmprestimoService {
     @Autowired
     ParcelaRepository parcelaRepository;
     @Autowired
-    AccountRepository accountRepository; 
-    
+    AccountRepository accountRepository;
+    @Autowired
+    EmailProducer emailProducer;
+
     @Transactional
     public ResponseEntity<Void> pagarParcela(JwtAuthenticationToken token, UUID id) {
         var userId = UUID.fromString(token.getName());
 
-        // Resgatar emprestimo do usuario
         EmprestimoEntity emprestimo = emprestimoRepository.findByIdEmprestimoAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado ou não pertence ao usuário"));
 
-        // Resgatar a primeira parcela pendente
         ParcelaEntity parcela = parcelaRepository
                 .findFirstByEmprestimo_IdEmprestimoAndStatus(id, StatusParcela.PENDENTE)
                 .orElseThrow(() -> new RuntimeException("Nenhuma parcela pendente encontrada"));
 
-        // Verificar saldo do usuario
         UserEntity user = accountRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -54,33 +55,63 @@ public class EmprestimoService {
             throw new RuntimeException("Saldo insuficiente para pagar a parcela");
         }
 
-        // Debitar saldo e marcar parcela como paga
         user.setBalance(user.getBalance().subtract(parcela.getValor()));
         parcela.setStatus(StatusParcela.PAGA);
         parcela.setDataPagamento(LocalDate.now());
         accountRepository.save(user);
         parcelaRepository.save(parcela);
 
-        // Verificar se ainda existem parcelas pendentes
         var parcelasPendentes = parcelaRepository
                 .findByEmprestimo_IdEmprestimoAndStatus(id, StatusParcela.PENDENTE);
 
         if (parcelasPendentes.isEmpty()) {
             emprestimo.setStatusEmprestimo(StatusEmprestimo.QUITADO);
             emprestimoRepository.save(emprestimo);
+
+            emailProducer.sendEmail(new EmailNotificationDto(
+                userId,
+                user.getEmail(),
+                "Empréstimo Quitado!",
+                "Parabéns " + user.getName() + "! Seu empréstimo foi totalmente quitado."
+            ));
+        } else {
+            emailProducer.sendEmail(new EmailNotificationDto(
+                userId,
+                user.getEmail(),
+                "Parcela Paga",
+                "Olá " + user.getName() + "! Sua parcela " + parcela.getNumero() +
+                " no valor de R$ " + parcela.getValor() + " foi paga com sucesso. " +
+                "Parcelas restantes: " + parcelasPendentes.size()
+            ));
         }
 
         return ResponseEntity.ok().build();
-    }
+    } 
 
-    public ResponseEntity<Void> emprestimoCriar(ItemEmprestimoDto dto){
+    @Transactional
+    public ResponseEntity<Void> emprestimoCriar(ItemEmprestimoDto dto, JwtAuthenticationToken token) {
+        var userId = UUID.fromString(token.getName());
+
+        UserEntity user = accountRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
         EmprestimoEntity entity = new EmprestimoEntity();
         org.springframework.beans.BeanUtils.copyProperties(dto, entity);
+        entity.setUserId(userId);
         emprestimoRepository.save(entity);
+
+        emailProducer.sendEmail(new EmailNotificationDto(
+            userId,
+            user.getEmail(),
+            "Empréstimo Criado",
+            "Olá " + user.getName() + "! Seu empréstimo de R$ " + dto.valor() +
+            " em " + dto.parcelas() + " parcelas foi criado com sucesso."
+        ));
+
         return ResponseEntity.ok().build();
     }
 
-    public ItemEmprestimoDto emprestimoGetById(JwtAuthenticationToken token, UUID id){
+    public ItemEmprestimoDto emprestimoGetById(JwtAuthenticationToken token, UUID id) {
         var userId = UUID.fromString(token.getName());
         return emprestimoRepository.findByIdEmprestimoAndUserId(id, userId)
                 .map(emprestimo -> new ItemEmprestimoDto(
@@ -96,9 +127,7 @@ public class EmprestimoService {
                 .orElseThrow(() -> new RuntimeException("Empréstimo não encontrado ou não pertence ao usuário"));
     }
 
-    public FeedEmprestimoDto getAllEmprestimos(int page,
-                                               int pageSize,
-                                               JwtAuthenticationToken token) {
+    public FeedEmprestimoDto getAllEmprestimos(int page, int pageSize, JwtAuthenticationToken token) {
         var userId = UUID.fromString(token.getName());
         Page<ItemEmprestimoDto> emprestimos = emprestimoRepository.findByUserId(
             userId,
@@ -113,7 +142,7 @@ public class EmprestimoService {
                     emprestimo.getStatusEmprestimo(),
                     emprestimo.getParcelaLista()
                 ));
-            
+
         return new FeedEmprestimoDto(
             emprestimos.getContent(),
             page,

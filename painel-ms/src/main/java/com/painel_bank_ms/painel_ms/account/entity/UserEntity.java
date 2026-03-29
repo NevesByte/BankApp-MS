@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.hibernate.validator.constraints.br.CPF;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.painel_bank_ms.painel_ms.account.enums.AccountStatus;
@@ -38,7 +36,6 @@ public class UserEntity {
     private UUID idUser;
     private String name;
     @Column(unique = true)
-    @CPF(message = "CPF inválido")
     private String cpf;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime birthDate;
@@ -69,6 +66,6 @@ public class UserEntity {
 
     
     //Emprestimos
-    @OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL)
     private List<EmprestimoEntity> emprestimo;
 }

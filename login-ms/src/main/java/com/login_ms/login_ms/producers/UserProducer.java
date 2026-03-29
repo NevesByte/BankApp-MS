@@ -22,7 +22,7 @@ public class UserProducer {
         emailDto.setEmailTo(userEntity.getEmail());
         emailDto.setSubject("Cadastro realizado com sucesso!");
         emailDto.setText("Olá, " + userEntity.getName() + ", seu cadastro no banco Fake foi realizado com sucesso!");
-        rabbitTemplate.convertAndSend("", routingQueue, userEntity);
+        rabbitTemplate.convertAndSend("", routingQueue, emailDto);
     }
 
     public void publishMessageEmailLogin(UserLoginDto userEntity){
@@ -30,6 +30,6 @@ public class UserProducer {
         emailDto.setEmailTo(userEntity.email());
         emailDto.setSubject("Login Realizado com sucesso !");
         emailDto.setText("Olá, alguém seja você ou não entrou no sua conta do banco :) Mas que bom que esse banco é fake !");
-        rabbitTemplate.convertAndSend("", routingQueue, userEntity);
+        rabbitTemplate.convertAndSend("", routingQueue, emailDto);
     }
 }

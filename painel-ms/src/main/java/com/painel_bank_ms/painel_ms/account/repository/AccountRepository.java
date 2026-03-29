@@ -9,5 +9,7 @@ import com.painel_bank_ms.painel_ms.account.entity.UserEntity;
 
 @Repository
 public interface AccountRepository extends JpaRepository<UserEntity, UUID> {
+
+    boolean existsByCpf(String cpf);
     
 }

@@ -1,4 +1,4 @@
-package com.painel_bank_ms.painel_ms.controller;
+package com.painel_bank_ms.painel_ms.geral_configurations.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

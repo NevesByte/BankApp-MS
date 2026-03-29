@@ -1,16 +1,16 @@
-package com.painel_bank_ms.painel_ms.config;
+package com.painel_bank_ms.painel_ms.geral_configurations.config;
 
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Configuration
 public class RabbitMQConfig {
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -22,5 +22,4 @@ public class RabbitMQConfig {
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
-
 }

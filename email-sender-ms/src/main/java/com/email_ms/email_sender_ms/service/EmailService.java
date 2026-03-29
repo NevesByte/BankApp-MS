@@ -25,8 +25,7 @@ public class EmailService {
             message.setTo(emailDto.emailTo());
             message.setSubject(emailDto.subject());
             message.setText(emailDto.text());
-            emailSender.send(message);
-        } catch (MailException e) {
+            emailSender.send(message);       } catch (MailException e) {
             throw new RuntimeException("Erro ao enviar email: " + e.getMessage());
         }
     }
