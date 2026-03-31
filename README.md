@@ -155,15 +155,3 @@ BankApp/
   email-sender-ms/
   docker-compose.yml
 ```
-
-## Valor Tecnico para Recrutamento
-
-Este projeto demonstra:
-
-- dominio de arquitetura de microsservicos;
-- maturidade em tratamento de erros e contratos HTTP;
-- capacidade de escrever codigo testavel e coberto por testes unitarios;
-- preocupacao com documentacao API-first (Swagger);
-- entrega pronta para ambiente containerizado.
-
-Em resumo: um backend com cara de produto real, estruturado para evolucao e manutencao em ambiente profissional.
