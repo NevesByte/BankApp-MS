@@ -3,16 +3,17 @@ package com.painel_bank_ms.painel_ms.transferencia.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.painel_bank_ms.painel_ms.account.repository.AccountRepository;
+import com.painel_bank_ms.painel_ms.geral_configurations.exceptions.InsufficientBalanceException;
+import com.painel_bank_ms.painel_ms.geral_configurations.exceptions.InvalidOperationException;
+import com.painel_bank_ms.painel_ms.geral_configurations.exceptions.ResourceNotFoundException;
 import com.painel_bank_ms.painel_ms.transferencia.dto.FeedTransferenciaDto;
 import com.painel_bank_ms.painel_ms.transferencia.dto.ItemTransferenciaDto;
 import com.painel_bank_ms.painel_ms.transferencia.dto.TransferenciaDto;
@@ -21,66 +22,64 @@ import com.painel_bank_ms.painel_ms.transferencia.repository.TransferenciaReposi
 
 @Service
 public class TransferenciaService {
-    @Autowired
-    TransferenciaRepository transferenciaRepository;
-    @Autowired
-    AccountRepository accountRepository;
+
+    private final TransferenciaRepository transferenciaRepository;
+    private final AccountRepository accountRepository;
+
+    public TransferenciaService(TransferenciaRepository transferenciaRepository, AccountRepository accountRepository) {
+        this.transferenciaRepository = transferenciaRepository;
+        this.accountRepository = accountRepository;
+    }
 
     public FeedTransferenciaDto getAllTranferencia(int page, int pageSize, JwtAuthenticationToken token) {
         var userId = UUID.fromString(token.getName());
-        Page<ItemTransferenciaDto> tranferencias = transferenciaRepository.findByUserId(
+        Page<ItemTransferenciaDto> transferencias = transferenciaRepository.findByUserId(
             userId,
-            PageRequest.of(page, pageSize, Sort.Direction.DESC, "data_transferencia"))
-                .map(transferencia -> new ItemTransferenciaDto(
-                    transferencia.getIdTransferencia(),
-                    transferencia.getDataTransferencia(),
-                    transferencia.getValorTranferencia(),
-                    transferencia.getEnviador(),
-                    transferencia.getRecebedor()
-                ));
+            PageRequest.of(page, pageSize, Sort.Direction.DESC, "dataTransferencia"))
+            .map(transferencia -> new ItemTransferenciaDto(
+                transferencia.getIdTransferencia(),
+                transferencia.getDataTransferencia(),
+                transferencia.getValorTransferencia(),
+                transferencia.getEnviador(),
+                transferencia.getRecebedor()
+            ));
 
         return new FeedTransferenciaDto(
-            tranferencias.getContent(),
+            transferencias.getContent(),
             page,
             pageSize,
-            tranferencias.getTotalPages(),
-            (int) tranferencias.getTotalElements()
+            transferencias.getTotalPages(),
+            (int) transferencias.getTotalElements()
         );
     }
 
     @Transactional
-    public ResponseEntity<Void> criarTransferencia(TransferenciaDto transferenciaDto) {
-        if (transferenciaDto == null) {
-            return ResponseEntity.badRequest().build();
-        }
+    public void criarTransferencia(TransferenciaDto transferenciaDto) {
+        var enviador = accountRepository.findById(transferenciaDto.enviadorId())
+            .orElseThrow(() -> new ResourceNotFoundException("Enviador nao encontrado."));
 
-        var enviador = accountRepository.findById(transferenciaDto.enviador().getIdUser())
-                .orElseThrow(() -> new RuntimeException("Enviador não encontrado"));
-
-        var recebedor = accountRepository.findById(transferenciaDto.recebedor().getIdUser())
-                .orElseThrow(() -> new RuntimeException("Recebedor não encontrado"));
+        var recebedor = accountRepository.findById(transferenciaDto.recebedorId())
+            .orElseThrow(() -> new ResourceNotFoundException("Recebedor nao encontrado."));
 
         if (!recebedor.isActive()) {
-            return ResponseEntity.badRequest().build();
+            throw new InvalidOperationException("A conta recebedora esta inativa.");
         }
 
-        if (enviador.getBalance().compareTo(transferenciaDto.valorTranferencia()) < 0) {
-            return ResponseEntity.badRequest().build();
+        if (enviador.getBalance().compareTo(transferenciaDto.valorTransferencia()) < 0) {
+            throw new InsufficientBalanceException("Saldo insuficiente para transferencia.");
         }
 
-        enviador.setBalance(enviador.getBalance().subtract(transferenciaDto.valorTranferencia()));
-        recebedor.setBalance(recebedor.getBalance().add(transferenciaDto.valorTranferencia()));
+        enviador.setBalance(enviador.getBalance().subtract(transferenciaDto.valorTransferencia()));
+        recebedor.setBalance(recebedor.getBalance().add(transferenciaDto.valorTransferencia()));
         accountRepository.save(enviador);
         accountRepository.save(recebedor);
 
         TransferenciaEntity transferenciaEntity = new TransferenciaEntity();
         transferenciaEntity.setEnviador(enviador);
         transferenciaEntity.setRecebedor(recebedor);
-        transferenciaEntity.setValorTranferencia(transferenciaDto.valorTranferencia());
+        transferenciaEntity.setValorTransferencia(transferenciaDto.valorTransferencia());
         transferenciaEntity.setDataTransferencia(LocalDateTime.now());
         transferenciaEntity.setUserId(enviador.getIdUser());
         transferenciaRepository.save(transferenciaEntity);
-
-        return ResponseEntity.ok().build();
     }
 }

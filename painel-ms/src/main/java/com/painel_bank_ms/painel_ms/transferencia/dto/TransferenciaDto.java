@@ -1,17 +1,14 @@
 package com.painel_bank_ms.painel_ms.transferencia.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.UUID;
 
-import com.painel_bank_ms.painel_ms.account.entity.UserEntity;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-
-public record TransferenciaDto(UserEntity enviador,
-                               UserEntity recebedor,
-                               BigDecimal valorTranferencia,
-                               LocalDateTime dataTransferencia) {
-    
+public record TransferenciaDto(
+    @NotNull UUID enviadorId,
+    @NotNull UUID recebedorId,
+    @NotNull @DecimalMin(value = "0.01", message = "O valor da transferencia deve ser maior que zero") BigDecimal valorTransferencia
+) {
 }

@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: bankapp-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16
+    container_name: bankapp-postgres
+    environment:
+      POSTGRES_DB: login-ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8.4
+    container_name: bankapp-mysql
+    environment:
+      MYSQL_DATABASE: bankapp
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  login-ms:
+    build:
+      context: ./login-ms
+    container_name: bankapp-login-ms
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    environment:
+      SERVER_PORT: 1010
+      DB_URL: jdbc:postgresql://postgres:5432/login-ms
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      BROKER_QUEUE_EMAIL: email-queue
+      BROKER_QUEUE_USER_DATA: user-data
+    ports:
+      - "1010:1010"
+
+  painel-ms:
+    build:
+      context: ./painel-ms
+    container_name: bankapp-painel-ms
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+      login-ms:
+        condition: service_started
+    environment:
+      SERVER_PORT: 1013
+      DB_URL: jdbc:mysql://mysql:3306/bankapp
+      DB_USER: root
+      DB_PASSWORD: root
+      RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      BROKER_QUEUE_EMAIL: email-queue
+      BROKER_QUEUE_USER_DATA: user-data
+    ports:
+      - "1013:1013"
+
+  email-sender-ms:
+    build:
+      context: ./email-sender-ms
+    container_name: bankapp-email-sender-ms
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 1012
+      RABBITMQ_ADDRESSES: amqp://guest:guest@rabbitmq:5672
+      BROKER_QUEUE_EMAIL: email-queue
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_TRUST_HOST: smtp.gmail.com
+    ports:
+      - "1012:1012"
+
+volumes:
+  postgres_data:
+  mysql_data:

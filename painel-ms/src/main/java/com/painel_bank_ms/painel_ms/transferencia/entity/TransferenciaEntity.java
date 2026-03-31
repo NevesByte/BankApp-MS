@@ -39,7 +39,7 @@ public class TransferenciaEntity {
     private UserEntity recebedor;
 
     @Column(name = "valor_transferencia")
-    private BigDecimal valorTranferencia;
+    private BigDecimal valorTransferencia;
 
     @Column(name = "data_transferencia")
     private LocalDateTime dataTransferencia;
