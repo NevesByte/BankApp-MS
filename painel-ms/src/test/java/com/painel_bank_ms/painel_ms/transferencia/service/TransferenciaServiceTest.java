@@ -43,6 +43,35 @@ class TransferenciaServiceTest {
     }
 
     @Test
+    void shouldThrowWhenSenderNotFound() {
+        when(accountRepository.findById(senderId)).thenReturn(Optional.empty());
+
+        var dto = new TransferenciaDto(senderId, receiverId, new BigDecimal("100.00"));
+
+        assertThrows(com.painel_bank_ms.painel_ms.geral_configurations.exceptions.ResourceNotFoundException.class,
+            () -> transferenciaService.criarTransferencia(dto));
+    }
+
+    @Test
+    void shouldThrowWhenReceiverIsInactive() {
+        UserEntity sender = new UserEntity();
+        sender.setIdUser(senderId);
+        sender.setBalance(new BigDecimal("200.00"));
+
+        UserEntity receiver = new UserEntity();
+        receiver.setIdUser(receiverId);
+        receiver.setActive(false);
+
+        when(accountRepository.findById(senderId)).thenReturn(Optional.of(sender));
+        when(accountRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
+
+        var dto = new TransferenciaDto(senderId, receiverId, new BigDecimal("100.00"));
+
+        assertThrows(com.painel_bank_ms.painel_ms.geral_configurations.exceptions.InvalidOperationException.class,
+            () -> transferenciaService.criarTransferencia(dto));
+    }
+
+    @Test
     void shouldThrowWhenSenderHasInsufficientBalance() {
         UserEntity sender = new UserEntity();
         sender.setIdUser(senderId);

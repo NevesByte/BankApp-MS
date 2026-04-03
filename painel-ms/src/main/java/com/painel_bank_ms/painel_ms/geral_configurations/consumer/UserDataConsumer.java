@@ -3,6 +3,7 @@ package com.painel_bank_ms.painel_ms.geral_configurations.consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
@@ -25,8 +26,9 @@ public class UserDataConsumer {
 
     @RabbitListener(queues = "${broker.queue.user.data.name}")
     public void listenUserDataQueue(@Payload UserDataConsumerDto dto) {
-        if (accountRepository.existsByCpf(dto.getCpf())) {
-            log.info("Usuario ja existe com CPF: {}", dto.getCpf());
+        log.info("Recebido usuario ID: {}, CPF: {}", dto.getIdUser(), dto.getCpf());
+        if (dto.getIdUser() == null) {
+            log.warn("idUser nulo, ignorando mensagem");
             return;
         }
 
@@ -50,7 +52,11 @@ public class UserDataConsumer {
         userEntity.setEmailVerified(dto.isEmailVerified());
         userEntity.setActive(dto.isActive());
 
-        accountRepository.save(userEntity);
-        log.info("Usuario salvo: {}", dto.getIdUser());
+        try {
+            accountRepository.saveAndFlush(userEntity);
+            log.info("Usuario salvo: {}", dto.getIdUser());
+        } catch (DataIntegrityViolationException | org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            log.info("Usuario ja existia, ignorado: {}", dto.getIdUser());
+        }
     }
 }

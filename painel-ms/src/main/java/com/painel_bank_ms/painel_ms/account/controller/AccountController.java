@@ -1,9 +1,11 @@
 package com.painel_bank_ms.painel_ms.account.controller;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,11 +28,19 @@ public class AccountController {
     }
 
     @GetMapping("/saldo")
-    @Operation(summary = "Consultar saldo")
-    public ResponseEntity<String> getSaldo(JwtAuthenticationToken token) {
-        var user = repository.findById(UUID.fromString(token.getName()))
-            .orElseThrow(() -> new ResourceNotFoundException("Conta nao encontrada."));
+    public ResponseEntity<String> getSaldo(@AuthenticationPrincipal Jwt jwt) {
 
-        return ResponseEntity.ok(user.getBalance().toString());
+        // 1. Pega o subject direto do token
+        String userId = jwt.getSubject();
+
+        // 2. Converte pra UUID
+        UUID uuid = UUID.fromString(userId);
+
+        // 3. Busca no banco
+        var user = repository.findById(uuid)
+            .orElseThrow(() -> new ResourceNotFoundException("Conta nao encontrada"));
+
+        BigDecimal balance = user.getBalance() != null ? user.getBalance() : BigDecimal.ZERO;
+        return ResponseEntity.ok(balance.toString());
     }
 }

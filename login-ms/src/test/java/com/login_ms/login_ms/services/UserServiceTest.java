@@ -82,6 +82,20 @@ class UserServiceTest {
     }
 
     @Test
+    void shouldThrowInvalidCredentialsWhenPasswordIsWrong() {
+        UserLoginEntity entity = new UserLoginEntity();
+        entity.setIdUser(UUID.randomUUID());
+        entity.setEmail("victor@email.com");
+        entity.setPassword("encoded-password");
+
+        when(userRepository.findByEmail("victor@email.com")).thenReturn(Optional.of(entity));
+        when(passwordEncoder.matches("wrong", "encoded-password")).thenReturn(false);
+
+        assertThrows(InvalidCredentialsException.class,
+            () -> userService.loginUser(new UserLoginDto("victor@email.com", "wrong")));
+    }
+
+    @Test
     void shouldSaveUserAndPublishMessages() {
         when(userRepository.findByEmail(signUpDto.email())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(signUpDto.password())).thenReturn("encoded-password");
@@ -124,7 +138,7 @@ class UserServiceTest {
         var response = userService.loginUser(new UserLoginDto("victor@email.com", "123456"));
 
         assertEquals("jwt-token", response.token());
-        assertEquals(300L, response.expiresIn());
+        assertEquals(3600L, response.expiresIn());
         verify(userProducer).publishMessageEmailLogin(any(UserLoginDto.class));
     }
 }

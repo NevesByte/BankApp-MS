@@ -11,13 +11,14 @@ import com.painel_bank_ms.painel_ms.account.enums.AccountStatus;
 import com.painel_bank_ms.painel_ms.account.enums.AccountTypeEnum;
 import com.painel_bank_ms.painel_ms.emprestimo.entity.EmprestimoEntity;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -31,8 +32,8 @@ import lombok.Setter;
 public class UserEntity {
     //Cadastro de usuário
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id")
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "user_id", length = 36)
     private UUID idUser;
     private String name;
     @Column(unique = true)
@@ -46,6 +47,7 @@ public class UserEntity {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Enumerated(EnumType.STRING)
+    @Column(name = "account_type")
     private AccountTypeEnum accountType;
     private BigDecimal balance;
     @Column(name = "account_status")

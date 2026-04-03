@@ -53,8 +53,8 @@ public class UserEntity {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @Enumerated(EnumType.STRING)
+    @Column(name = "account_type")
     private AccountTypeEnum accountType;
-
     //DefaultValues
     private BigDecimal balance;
     @Column(name = "account_status")

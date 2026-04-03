@@ -26,7 +26,6 @@ public class UserLoginEntity {
     private String password;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_id")
     private UUID idUser;
 

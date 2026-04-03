@@ -11,5 +11,9 @@ import com.painel_bank_ms.painel_ms.account.entity.UserEntity;
 public interface AccountRepository extends JpaRepository<UserEntity, UUID> {
 
     boolean existsByCpf(String cpf);
+
+    java.util.Optional<UserEntity> findByCpf(String cpf);
+    
+    java.util.Optional<UserEntity> findByEmail(String email);
     
 }

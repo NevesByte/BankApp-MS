@@ -30,7 +30,7 @@ import jakarta.transaction.Transactional;
 @Service
 public class UserService {
 
-    private static final long EXPIRES_IN_SECONDS = 300L;
+    private static final long EXPIRES_IN_SECONDS = 3600L;
 
     private final UserRepository userRepository;
     private final UserEntityRepository userEntityRepository;
@@ -84,11 +84,6 @@ public class UserService {
 
         String encryptedPassword = passwordEncoder.encode(user.password());
 
-        UserLoginEntity userLoginEntity = new UserLoginEntity();
-        BeanUtils.copyProperties(user, userLoginEntity);
-        userLoginEntity.setPassword(encryptedPassword);
-        userRepository.save(userLoginEntity);
-
         UserEntity userEntity = new UserEntity();
         BeanUtils.copyProperties(user, userEntity);
         userEntity.setPassword(encryptedPassword);
@@ -103,6 +98,12 @@ public class UserService {
         userEntity.setActive(true);
 
         userEntityRepository.save(userEntity);
+
+        UserLoginEntity userLoginEntity = new UserLoginEntity();
+        BeanUtils.copyProperties(user, userLoginEntity);
+        userLoginEntity.setPassword(encryptedPassword);
+        userLoginEntity.setIdUser(userEntity.getIdUser());
+        userRepository.save(userLoginEntity);
         userProducer.publishMessageEmailSignUp(userEntity);
         userDataProducer.userData(userEntity);
     }
