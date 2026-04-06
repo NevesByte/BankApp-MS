@@ -1,0 +1,118 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build and Test login-ms
+      run: |
+        cd login-ms
+        ./mvnw clean package -DskipTests=false
+    
+    - name: Build and Test painel-ms
+      run: |
+        cd painel-ms
+        ./mvnw clean package -DskipTests=false
+    
+    - name: Build and Test email-sender-ms
+      run: |
+        cd email-sender-ms
+        ./mvnw clean package -DskipTests=false
+    
+    - name: Upload login-ms artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: login-ms-jar
+        path: login-ms/target/*.jar
+    
+    - name: Upload painel-ms artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: painel-ms-jar
+        path: painel-ms/target/*.jar
+    
+    - name: Upload email-sender-ms artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: email-sender-ms-jar
+        path: email-sender-ms/target/*.jar
+
+  deploy-login-ms:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: login-ms-jar
+    
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        RENDER_SERVICE_ID_LOGIN: ${{ secrets.RENDER_SERVICE_ID_LOGIN }}
+      run: |
+        curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_LOGIN/deploys" \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"clearCache": false}'
+
+  deploy-painel-ms:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: painel-ms-jar
+    
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        RENDER_SERVICE_ID_PAINEL: ${{ secrets.RENDER_SERVICE_ID_PAINEL }}
+      run: |
+        curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_PAINEL/deploys" \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"clearCache": false}'
+
+  deploy-email-sender-ms:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: email-sender-ms-jar
+    
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        RENDER_SERVICE_ID_EMAIL: ${{ secrets.RENDER_SERVICE_ID_EMAIL }}
+      run: |
+        curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_EMAIL/deploys" \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"clearCache": false}'

@@ -93,6 +93,32 @@ Cobrem fluxos de sucesso e erro (conflito, credenciais invalidas, saldo insufici
   - painel-ms
   - email-sender-ms
 
+### CI/CD Pipeline
+
+Pipeline automatizado com GitHub Actions:
+
+**Fluxo:**
+```
+GitHub (push) → CI/CD → Build (mvn) → Testes → Gera .jar → Deploy (Render) → App Online
+```
+
+**Etapas:**
+
+1. **Build & Test**: compila e testa os 3 microsservicos com Maven
+2. **Artifacts**: gera e armazena os `.jar` de cada servico
+3. **Deploy**: envia para Render via API (apenas em push para `main`/`master`)
+
+**Configuracao:**
+
+Adicione os seguintes secrets no GitHub (Settings → Secrets and variables → Actions):
+
+- `RENDER_API_KEY`: sua chave de API do Render
+- `RENDER_SERVICE_ID_LOGIN`: ID do servico login-ms no Render
+- `RENDER_SERVICE_ID_PAINEL`: ID do servico painel-ms no Render
+- `RENDER_SERVICE_ID_EMAIL`: ID do servico email-sender-ms no Render
+
+**Arquivo:** `.github/workflows/ci-cd.yml`
+
 ## Endpoints Principais
 
 ### login-ms
